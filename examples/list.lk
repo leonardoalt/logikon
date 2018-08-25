@@ -1,0 +1,5 @@
+define min
+([X]) X.
+([H|T]) X :-
+    (= Y (min T)),
+    (= X (ite (< H Y) H Y)).

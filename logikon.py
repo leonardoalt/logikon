@@ -22,7 +22,7 @@ if __name__ == '__main__':
     ast = syntax_checker.check(tokens)
     print(ast.toString())
 
-    formal_checker = FormalChecker()
-    ast.accept(formal_checker)
+#    formal_checker = FormalChecker()
+#    ast.accept(formal_checker)
 
-    print(formal_checker.solver)
+#    print(formal_checker.solver)

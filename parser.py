@@ -49,14 +49,15 @@ class Parser:
             self.needle += 1
 
     _blanks = [' ', '\t', '\n']
-    _separators = ['(', ')', '[', ']', ',', '.']
+    _separators = ['(', ')', '[', ']', ',', '.', '|']
 
     _keywords = {
-        "declare-var" : "state_var_declaration",
-        "declare-pred": "predicate_declaration",
+        "declare" : "state_var_declaration",
+        "define": "predicate_declaration",
         "public" : "visibility_specifier",
         "UInt" : "type",
         "Array" : "type",
+        "List" : "type",
         "sum" : "unary_operator",
         "prove" : "unary_operator",
         "not" : "unary_operator",
@@ -83,7 +84,8 @@ class Parser:
         "]" : "right_brack",
         ":-" : "entails",
         "." : "period",
-        "," : "comma"
+        "," : "comma",
+        "|" : "pipe"
     }
 
     def isKeyword(self, word):

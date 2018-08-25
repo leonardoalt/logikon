@@ -38,6 +38,12 @@ class StateVarDeclNode(VarDecl):
         self.acceptChildren(_visitor)
         _visitor.endVisitStateVarDecl(self)
 
+class ParamVarNode(VarDecl):
+    def accept(self, _visitor):
+        _visitor.visitParamVar(self)
+        self.acceptChildren(_visitor)
+        _visitor.endVisitParamVar(self)
+
 class TypeNode(ASTNode):
     def accept(self, _visitor):
         _visitor.visitType(self)
@@ -49,6 +55,18 @@ class PredicateNode(ASTNode):
         _visitor.visitPredicate(self)
         self.acceptChildren(_visitor)
         _visitor.endVisitPredicate(self)
+
+class PredicateCaseNode(ASTNode):
+    def accept(self, _visitor):
+        _visitor.visitPredicateCase(self)
+        self.acceptChildren(_visitor)
+        _visitor.endVisitPredicateCase(self)
+
+class PredicateBodyNode(ASTNode):
+    def accept(self, _visitor):
+        _visitor.visitPredicateBody(self)
+        self.acceptChildren(_visitor)
+        _visitor.endVisitPredicateBody(self)
 
 class UserPredicateCallNode(ASTNode):
     def accept(self, _visitor):
@@ -101,14 +119,8 @@ class ParamListNode(ASTNode):
         self.acceptChildren(_visitor)
         _visitor.endVisitParamList(self)
 
-class LocalVarsListNode(ASTNode):
+class ReturnValueNode(ASTNode):
     def accept(self, _visitor):
-        _visitor.visitLocalVarsList(self)
+        _visitor.visitReturnValue(self)
         self.acceptChildren(_visitor)
-        _visitor.endVisitLocalVarsList(self)
-
-class LocalVarDeclNode(VarDecl):
-    def accept(self, _visitor):
-        _visitor.visitLocalVarDecl(self)
-        self.acceptChildren(_visitor)
-        _visitor.endVisitLocalVarDecl(self)
+        _visitor.endVisitReturnValue(self)

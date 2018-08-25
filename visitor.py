@@ -7,6 +7,10 @@ class Visitor:
         pass
     def endVisitStateVarDecl(self, node):
         pass
+    def visitParamVar(self, node):
+        pass
+    def endVisitParamVar(self, node):
+        pass
     def visitType(self, node):
         pass
     def endVisitType(self, node):
@@ -14,6 +18,14 @@ class Visitor:
     def visitPredicate(self, node):
         pass
     def endVisitPredicate(self, node):
+        pass
+    def visitPredicateCase(self, node):
+        pass
+    def endVisitPredicateCase(self, node):
+        pass
+    def visitPredicateBody(self, node):
+        pass
+    def endVisitPredicateBody(self, node):
         pass
     def visitUserPredicateCall(self, node):
         pass
@@ -47,11 +59,7 @@ class Visitor:
         pass
     def endVisitParamList(self, node):
         pass
-    def visitLocalVarsList(self, node):
+    def visitReturnValue(self, node):
         pass
-    def endVisitLocalVarsList(self, node):
-        pass
-    def visitLocalVarDecl(self, node):
-        pass
-    def endVisitLocalVarDecl(self, node):
+    def endVisitReturnValue(self, node):
         pass

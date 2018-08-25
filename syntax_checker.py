@@ -49,22 +49,41 @@ class SyntaxChecker:
         return state_var_node
 
     def checkPredicate(self):
-        self.resetPredicate()
         identifier = self.next_token(["identifier"])
         pred_node = PredicateNode(identifier.value, "PredicateDefinition")
         pred_node.add_child(self.checkVisibility())
-        left_parent = self.next_token(["left_parent"])
-        pred_node.add_child(self.checkPredicateParameters())
-        left_brack = self.next_token(["left_brack"])
-        pred_node.add_child(self.checkLocalVarsList())
-        right_brack = self.next_token(["right_brack"])
-        entails = self.next_token(["entails"])
-        token = self.predict_token()
-        while token.type == "left_parent":
-            pred_node.add_child(self.checkStatement())
-            token = self.predict_token()
-        token = self.next_token(["period"])
+        left_parent = self.predict_token()
+        while left_parent.type == "left_parent":
+            pred_node.add_child(self.checkPredicateCase())
+            left_parent = self.predict_token()
         return pred_node
+
+    def checkPredicateCase(self):
+        self.resetPredicate()
+        pred_node = PredicateCaseNode("", "PredicateCase")
+        pred_node.add_child(self.checkPredicateParameters())
+        pred_node.add_child(self.checkReturnValue())
+        pred_node.add_child(self.checkPredicateBody())
+        return pred_node
+
+    def checkPredicateBody(self):
+        predBody = PredicateBodyNode("", "PredicateBody")
+        token = self.predict_token()
+        if token.type == "entails":
+            entails = self.next_token(["entails"])
+            token = self.predict_token()
+            while token.type == "left_parent":
+                predBody.add_child(self.checkStatement())
+                token = self.predict_token()
+        token = self.next_token(["period"])
+        return predBody
+
+    def checkReturnValue(self):
+        retValue = ReturnValueNode("", "ReturnValue")
+        token = self.predict_token()
+        if token.type == "identifier":
+            retValue.add_child(self.checkIdentifier())
+        return retValue
 
     def checkStatement(self):
         token = self.next_token(["left_parent"])
@@ -118,8 +137,8 @@ class SyntaxChecker:
             id_node.setRef(self.stateVariables[token.value])
         elif token.value in self.localVariables:
             id_node.setRef(self.localVariables[token.value])
-        else:
-            self.report_error("variable " + token.value + " not declared.")
+        #else:
+        #    self.report_error("variable " + token.value + " not declared.")
         return id_node
 
     def checkVisibility(self):
@@ -132,37 +151,49 @@ class SyntaxChecker:
 
     def checkPredicateParameters(self):
         param_list = ParamListNode("", "ParameterList")
-        token = self.next_token(["identifier", "right_parent"])
-        while token.type == "identifier":
-            type_node = TypeNode("UInt", "Type")
-            local_var_decl_node = LocalVarDeclNode(token.value, "LocalVarDecl")
-            local_var_decl_node.add_child(type_node)
-            if token.value in self.localVariables:
-                self.report_error("local variable " + token.value + " already declared.")
-            self.localVariables[token.value] = local_var_decl_node
-            param_list.add_child(local_var_decl_node)
-            token = self.next_token(["identifier", "right_parent"])
+        token = self.next_token(["left_parent"])
+        token = self.predict_token()
+        while token.type != "right_parent":
+            param_list.add_child(self.checkParamVar())
+            token = self.predict_token()
+        token = self.next_token(["right_parent"])
         return param_list
 
-    def checkLocalVarsList(self):
-        local_vars_list_node = LocalVarsListNode("", "LocalVariableList")
+    def checkParamVar(self):
+        var = ParamVarNode("", "ParamVar")
         token = self.predict_token()
-        while token.type == "identifier":
-            local_vars_list_node.add_child(self.checkLocalVariableDeclaration())
+        if token.type == "identifier":
+            self.checkParamVarWithType(var, "UInt")
+        elif token.type == "left_brack":
+            token = self.next_token(["left_brack"])
+            type_node = TypeNode("List", "Type")
+            var.add_child(type_node)
             token = self.predict_token()
-            if token.type == "comma":
-                token = self.next_token(["comma"])
+            if token.type != "right_brack":
+                head_node = ParamVarNode("", "ParamVar")
+                self.checkParamVarWithType(head_node, "UInt")
+                var.add_child(head_node)
                 token = self.predict_token()
-        return local_vars_list_node
+                if token.type == "pipe":
+                    token = self.next_token(["pipe"])
+                    tail_node = ParamVarNode("", "ParamVar")
+                    self.checkParamVarWithType(tail_node, "List")
+                    var.add_child(tail_node)
+            token = self.next_token(["right_brack"])
+        return var
 
-    def checkLocalVariableDeclaration(self):
-        token = self.next_token(["identifier"])
-        local_var_node = LocalVarDeclNode(token.value, "LocalVariableDeclaration")
-        if token.value in self.localVariables:
-            self.report_error("local variable " + token.value + " already declared.")
-        self.localVariables[token.value] = local_var_node
-        local_var_node.add_child(self.checkType())
-        return local_var_node
+    def checkParamVarWithType(self, varNode, varType):
+        type_node = TypeNode(varType, "Type")
+        id_node = self.checkIdentifier()
+        varNode.add_child(type_node)
+        varNode.add_child(id_node)
+        self.checkLocalVar(id_node.name, varNode)
+
+
+    def checkLocalVar(self, name, node):
+        if name in self.localVariables:
+            self.report_error("local variable " + name + " already declared.")
+        self.localVariables[name] = node
 
     def checkType(self):
         token = self.next_token(["type"])

@@ -1,0 +1,9 @@
+define ssum (X Y) Z :-
+    (= Z (+ X Y)).
+
+define double (X) D :-
+    (= D (ssum X X)).
+
+define triple (X) T :-
+    (= D (ssum X X)),
+    (= T (ssum X D)).
