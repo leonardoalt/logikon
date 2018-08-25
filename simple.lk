@@ -1,0 +1,5 @@
+declare-pred soma (A) [C UInt, X UInt, ARR Array, ARR2 Array] :-
+	(= C (+ A (select ARR 1))),
+	(= ARR2 (store ARR 2 C)),
+	(= X (select ARR2 2)),
+	(prove (>= X A)).
