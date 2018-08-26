@@ -1,27 +1,32 @@
 class ASTNode:
     def __init__(self, _name, _type):
-        self.children = []
+        self.children = {}
         self.name = _name
         self.type = _type
 
-    def add_child(self, _child):
-        if (_child == None):
+    def add_child(self, _key, _child):
+        if _child == None:
             raise Exception('Null child added')
-        self.children.append(_child)
+        if _key in self.children:
+            self.children[_key].append(_child)
+        else:
+            self.children[_key] = [_child]
 
     def toString(self, _tabs = 0):
-        node = '\t' * _tabs + "Value: " + self.name + ", Type: " + self.type + '\n'
-        for child in self.children:
-            node += child.toString(_tabs + 1)
+        node = '\t' * _tabs + "Name: " + self.name + ", Type: " + self.type + '\n'
+        for key in self.children:
+            for child in self.children[key]:
+                node += '\t' * (_tabs + 1) + key + ":\n"
+                node += child.toString(_tabs + 1)
         return node
 
     def accept(self, _visitor):
-        print("accept AST")
         pass
 
     def acceptChildren(self, _visitor):
-        for child in self.children:
-            child.accept(_visitor)
+        for key in self.children:
+            for child in self.children[key]:
+                child.accept(_visitor)
 
 class ContractNode(ASTNode):
     def accept(self, _visitor):

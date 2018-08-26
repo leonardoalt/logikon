@@ -23,7 +23,8 @@ class SyntaxChecker:
         contract_node = ContractNode("", "ContractDefinition")
         token = self.predict_token()
         while token.type != "EOF":
-            contract_node.add_child(self.checkStateVarOrPredicate())
+            nodeType, node = self.checkStateVarOrPredicate()
+            contract_node.add_child(nodeType, node)
             token = self.predict_token()
         token = self.next_token(["EOF"])
         return contract_node
@@ -31,9 +32,9 @@ class SyntaxChecker:
     def checkStateVarOrPredicate(self):
         declaration = self.next_token(["state_var_declaration", "predicate_declaration"])
         if declaration.type == "state_var_declaration":
-            return self.checkStateVar()
+            return ("StateVarDeclaration", self.checkStateVar())
         if declaration.type == "predicate_declaration":
-            return self.checkPredicate()
+            return ("PredicateDefinition", self.checkPredicate())
 
     def checkStateVar(self):
         identifier = self.next_token(["identifier"])
@@ -41,29 +42,29 @@ class SyntaxChecker:
         if identifier in self.stateVariables:
             self.report_error("state variable " + identifier + " already declared.")
         self.stateVariables[identifier.value] = state_var_node
-        state_var_node.add_child(self.checkVisibility())
+        state_var_node.add_child("Visibility", self.checkVisibility())
         var_type = self.next_token(["type"])
         var_type_node = TypeNode(var_type.value, "Type")
-        state_var_node.add_child(var_type_node)
+        state_var_node.add_child("Type", var_type_node)
         period = self.next_token(["period"])
         return state_var_node
 
     def checkPredicate(self):
         identifier = self.next_token(["identifier"])
         pred_node = PredicateNode(identifier.value, "PredicateDefinition")
-        pred_node.add_child(self.checkVisibility())
+        pred_node.add_child("Visibility", self.checkVisibility())
         left_parent = self.predict_token()
         while left_parent.type == "left_parent":
-            pred_node.add_child(self.checkPredicateCase())
+            pred_node.add_child("PredicateCase", self.checkPredicateCase())
             left_parent = self.predict_token()
         return pred_node
 
     def checkPredicateCase(self):
         self.resetPredicate()
         pred_node = PredicateCaseNode("", "PredicateCase")
-        pred_node.add_child(self.checkPredicateParameters())
-        pred_node.add_child(self.checkReturnValue())
-        pred_node.add_child(self.checkPredicateBody())
+        pred_node.add_child("PredicateParameters", self.checkPredicateParameters())
+        pred_node.add_child("ReturnValue", self.checkReturnValue())
+        pred_node.add_child("PredicateBody", self.checkPredicateBody())
         return pred_node
 
     def checkPredicateBody(self):
@@ -73,7 +74,7 @@ class SyntaxChecker:
             entails = self.next_token(["entails"])
             token = self.predict_token()
             while token.type == "left_parent":
-                predBody.add_child(self.checkStatement())
+                predBody.add_child("Statement", self.checkStatement())
                 token = self.predict_token()
         token = self.next_token(["period"])
         return predBody
@@ -82,7 +83,7 @@ class SyntaxChecker:
         retValue = ReturnValueNode("", "ReturnValue")
         token = self.predict_token()
         if token.type == "identifier":
-            retValue.add_child(self.checkIdentifier())
+            retValue.add_child("Name", self.checkIdentifier())
         return retValue
 
     def checkStatement(self):
@@ -93,10 +94,10 @@ class SyntaxChecker:
             statement_node = UserPredicateCallNode("", "UserPredicate")
             id_node = self.checkIdentifier()
             id_node.setRef(statement_node)
-            statement_node.add_child(id_node)
+            statement_node.add_child("Name", id_node)
             token = self.predict_token()
             while token.type != "right_parent":
-                statement_node.add_child(self.checkAtom())
+                statement_node.add_child("Argument", self.checkAtom())
                 token = self.predict_token()
         else:
             token = self.next_token(["unary_operator", "binary_operator", "ternary_operator"])
@@ -111,7 +112,7 @@ class SyntaxChecker:
                 statement_node = TernaryOperatorNode(token.value, "TernaryOperator")
                 atoms = 3
             for i in range(atoms):
-                statement_node.add_child(self.checkAtom())
+                statement_node.add_child("Argument", self.checkAtom())
         token = self.next_token(["right_parent"])
         token = self.predict_token()
         if token.type == "comma":
@@ -154,7 +155,7 @@ class SyntaxChecker:
         token = self.next_token(["left_parent"])
         token = self.predict_token()
         while token.type != "right_parent":
-            param_list.add_child(self.checkParamVar())
+            param_list.add_child("Variable", self.checkParamVar())
             token = self.predict_token()
         token = self.next_token(["right_parent"])
         return param_list
@@ -167,26 +168,26 @@ class SyntaxChecker:
         elif token.type == "left_brack":
             token = self.next_token(["left_brack"])
             type_node = TypeNode("List", "Type")
-            var.add_child(type_node)
+            var.add_child("Type", type_node)
             token = self.predict_token()
             if token.type != "right_brack":
                 head_node = ParamVarNode("", "ParamVar")
                 self.checkParamVarWithType(head_node, "UInt")
-                var.add_child(head_node)
+                var.add_child("Head", head_node)
                 token = self.predict_token()
                 if token.type == "pipe":
                     token = self.next_token(["pipe"])
                     tail_node = ParamVarNode("", "ParamVar")
                     self.checkParamVarWithType(tail_node, "List")
-                    var.add_child(tail_node)
+                    var.add_child("Tail", tail_node)
             token = self.next_token(["right_brack"])
         return var
 
     def checkParamVarWithType(self, varNode, varType):
         type_node = TypeNode(varType, "Type")
         id_node = self.checkIdentifier()
-        varNode.add_child(type_node)
-        varNode.add_child(id_node)
+        varNode.add_child("Type", type_node)
+        varNode.add_child("Name", id_node)
         self.checkLocalVar(id_node.name, varNode)
 
 

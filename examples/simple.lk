@@ -1,4 +1,4 @@
-define ssum (X Y) Z :-
+    define ssum (X Y) Z :-
     (= Z (+ X Y)).
 
 define double (X) D :-
