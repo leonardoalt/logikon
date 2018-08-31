@@ -1,0 +1,5 @@
+- Infer all types automatically
+- Finish TypeChecker
+- Test multiple parameters
+- Test multiple list parameters
+- Test multiple list parameters with the same head

@@ -53,30 +53,6 @@ class Keywords:
         Pipe
     ]
 
-    _arithmetic = [
-        Plus,
-        Minus,
-        Multiplication,
-        Division
-    ]
-
-    _boolean = [
-        Equals,
-        NotEquals,
-        Not,
-        And,
-        Or,
-        LessThan,
-        LessOrEqual,
-        GreaterThan,
-        GreaterOrEqual
-    ]
-
-    _array = [
-        Store,
-        Select
-    ]
-
 class TokenTypes:
     StateVarDeclaration = "state_var_declaration"
     PredicateDefinition = "predicate_definition"

@@ -39,6 +39,14 @@ class ASTNode:
         else:
             self.children[_key] = [_child]
 
+    def has_child(self, _key):
+        return _key in self.children
+
+    def get_children(self, _key):
+        if self.has_child(_key):
+            return self.children[key]
+        return []
+
     def toString(self, _tabs = 0):
         node = '\t' * _tabs + "Name: " + self.name + ", Type: " + self.type + '\n'
         for key in self.children:
@@ -87,12 +95,12 @@ class StateVarDeclNode(VarDecl):
 
 class ParamVarNode(VarDecl):
     def accept(self, _visitor):
-        _visitor.visitParamVar(self)
-        childSeq = [
-            ASTNodeChildrenTypes.Head,
-            ASTNodeChildrenTypes.Tail
-        ]
-        self.acceptChildrenSequence(childSeq, _visitor)
+        if not _visitor.visitParamVar(self):
+            childSeq = [
+                ASTNodeChildrenTypes.Head,
+                ASTNodeChildrenTypes.Tail
+            ]
+            self.acceptChildrenSequence(childSeq, _visitor)
         _visitor.endVisitParamVar(self)
 
 class TypeNode(ASTNode):
@@ -166,6 +174,9 @@ class IdentifierNode(ASTNode):
         _visitor.visitIdentifier(self)
         self.acceptChildren(_visitor)
         _visitor.endVisitIdentifier(self)
+
+    def setReference(self, _node):
+        self.referenced = _node
 
 class VisibilityNode(ASTNode):
     def accept(self, _visitor):
