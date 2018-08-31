@@ -16,10 +16,10 @@ if __name__ == '__main__':
 
     parser = Parser()
     tokens = parser.parse(source)
-    print([t.toString() for t in tokens])
+    #print([t.toString() for t in tokens])
 
     syntax_checker = SyntaxChecker()
-    ast = syntax_checker.check(tokens)
+    ast = syntax_checker.check(tokens, source)
     print(ast.toString())
 
 #    formal_checker = FormalChecker()

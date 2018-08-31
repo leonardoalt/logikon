@@ -23,8 +23,7 @@ class Keywords:
     Division = "/"
     Store = "store"
     Select = "select"
-    SyncUInt = "syncUInt"
-    SyncArray = "syncArray"
+    Update = "update"
     LeftParent = "("
     RightParent = ")"
     LeftBrack = "["
@@ -87,10 +86,9 @@ class Keywords:
         Sum : "unary_operator",
         Prove : "unary_operator",
         Not : "unary_operator",
-        SyncUInt : "binary_operator",
+        Update : "update_operator",
         Select : "binary_operator",
         Store : "ternary_operator",
-        SyncArray : "ternary_operator",
         Ite : "ternary_operator",
         Equals : "binary_operator",
         NotEquals : "binary_operator",

@@ -35,6 +35,10 @@ class Visitor:
         pass
     def endVisitUnaryOperator(self, node):
         pass
+    def visitUpdateOperator(self, node):
+        pass
+    def endVisitUpdateOperator(self, node):
+        pass
     def visitBinaryOperator(self, node):
         pass
     def endVisitBinaryOperator(self, node):

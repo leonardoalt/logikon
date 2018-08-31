@@ -1,19 +1,13 @@
-declare-var NTransfers public UInt.
-declare-var Balance public Array.
+declare NTransfers public UInt.
+declare Balance public Array.
 
-declare-pred transfer public (To Amount Sender)
-    [FromBalance UInt,
-	 ToBalance UInt,
-     Balance2 Array,
-     Balance3 Array,
-     NTransfers2 UInt] :-
+define transfer public (To Amount) :-
     (= FromBalance (select Balance Sender)),
     (>= FromBalance Amount),
     (= ToBalance (select Balance To)),
     (= Balance2 (store Balance Sender (- FromBalance Amount))),
-    (= Balance3 (store Balance To (+ ToBalance Amount))),
+    (= Balance3 (store Balance2 To (+ ToBalance Amount))),
     (= NTransfers2 (+ NTransfers 1)),
     (prove (= (sum Balance3) (sum Balance))),
-    (syncArray Balance Sender (select Balance3 Sender)),
-    (syncArray Balance To (select Balance3 To)),
-    (syncUInt NTransfers NTransfers2).
+    (update Balance Balance3),
+	(update NTransfers NTransfers2).

@@ -14,7 +14,7 @@ class Parser:
     def parse_token(self):
         self.consume_blanks()
         if self.needle >= len(self.code):
-            return LogikonToken("", "EOF", self.needle)
+            return LogikonToken("", "EOF", self.needle, 0)
 
         c = self.current_char()
         if c in Keywords._separators:
@@ -34,7 +34,7 @@ class Parser:
 
         needle = self.needle
         self.needle += len(token)
-        return LogikonToken(token, t_type, needle)
+        return LogikonToken(token, t_type, needle, len(token))
 
     def current_char(self):
         return self.code[self.needle]

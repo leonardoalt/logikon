@@ -13,8 +13,9 @@ class SyntaxChecker:
     def resetPredicate(self):
         self.localVariables = {}
 
-    def check(self, tokens):
+    def check(self, tokens, code):
         self.tokens = tokens
+        self.code = code
         self.current = 0
         return self.checkContract()
 
@@ -40,7 +41,7 @@ class SyntaxChecker:
         identifier = self.next_token(["identifier"])
         state_var_node = StateVarDeclNode(identifier.value, "StateVarDeclaration")
         if identifier in self.stateVariables:
-            self.report_error("state variable " + identifier + " already declared.")
+            self.report_error("state variable " + identifier + " already declared.", identifier.position, identifier.length)
         self.stateVariables[identifier.value] = state_var_node
         state_var_node.add_child("Visibility", self.checkVisibility())
         var_type = self.next_token(["type"])
@@ -90,29 +91,28 @@ class SyntaxChecker:
         token = self.next_token(["left_parent"])
         token = self.predict_token()
         statement_node = None
+        token = self.predict_token()
         if token.type == "identifier":
             statement_node = UserPredicateCallNode("", "UserPredicate")
             id_node = self.checkIdentifier()
             id_node.setRef(statement_node)
             statement_node.add_child("Name", id_node)
-            token = self.predict_token()
-            while token.type != "right_parent":
-                statement_node.add_child("Argument", self.checkAtom())
-                token = self.predict_token()
         else:
-            token = self.next_token(["unary_operator", "binary_operator", "ternary_operator"])
-            atoms = 0
-            if token.type == "unary_operator":
+            token = self.next_token(["update_operator", "unary_operator", "binary_operator", "ternary_operator"])
+            if token.type == "update_operator":
+                statement_node = UpdateOperatorNode("", "UpdateOperator")
+            elif token.type == "unary_operator":
                 statement_node = UnaryOperatorNode(token.value, "UnaryOperator")
-                atoms = 1
             elif token.type == "binary_operator":
                 statement_node = BinaryOperatorNode(token.value, "BinaryOperator")
-                atoms = 2
             elif token.type == "ternary_operator":
                 statement_node = TernaryOperatorNode(token.value, "TernaryOperator")
-                atoms = 3
-            for i in range(atoms):
-                statement_node.add_child("Argument", self.checkAtom())
+
+        token = self.predict_token()
+        while token.type != "right_parent":
+            statement_node.add_child("Argument", self.checkAtom())
+            token = self.predict_token()
+
         token = self.next_token(["right_parent"])
         token = self.predict_token()
         if token.type == "comma":
@@ -193,30 +193,33 @@ class SyntaxChecker:
 
     def checkLocalVar(self, name, node):
         if name in self.localVariables:
-            self.report_error("local variable " + name + " already declared.")
+            self.report_error("local variable " + name + " already declared.", 0, 0)
         self.localVariables[name] = node
 
     def checkType(self):
         token = self.next_token(["type"])
         return TypeNode(token.value, "Type")
 
-    def report_error(self, message):
-        print("SyntaxError: " + message)
-        sys.exit(1)
+    def report_error(self, message, position, length):
+        msg = "SyntaxError: " + message
+        location_left = self.code[:position].rfind('\n')
+        location_right = self.code[(position + length):].find('\n') + position + length
+        msg += "\nhere: " + self.code[location_left : location_right]
+        raise Exception(msg)
 
     def next_token(self, expected = []):
         if self.current >= len(self.tokens):
-            self.report_error("Missing token")
+            self.report_error("Missing token", 0, 0)
             sys.exit(1)
         token = self.tokens[self.current]
         if len(expected) > 0:
             if token.type not in expected:
-                self.report_error("One of the following types of tokens was expected: " + ", ".join(expected) + " but found " + token.type + " of value " + token.value + ".")
+                self.report_error("One of the following types of tokens was expected: " + ", ".join(expected) + " but found " + token.type + " of value " + token.value + ".", token.position, token.length)
         self.current += 1
         return token
 
     def predict_token(self):
         if self.current >= len(self.tokens):
-            self.report_error("Missing token")
+            self.report_error("Missing token", 0, 0)
             sys.exit(1)
         return self.tokens[self.current]

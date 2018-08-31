@@ -79,6 +79,13 @@ class UserPredicateCallNode(ASTNode):
         self.acceptChildren(_visitor)
         _visitor.endVisitUserPredicateCall(self)
 
+class UpdateOperatorNode(ASTNode):
+    def accept(self, _visitor):
+        _visitor.visitUpdateOperator(self)
+        self.acceptChildren(_visitor)
+        _visitor.endVisitUpdateOperator(self)
+
+
 class UnaryOperatorNode(ASTNode):
     def accept(self, _visitor):
         _visitor.visitUnaryOperator(self)
