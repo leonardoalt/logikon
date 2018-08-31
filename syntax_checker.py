@@ -5,14 +5,7 @@ import sys
 
 class SyntaxChecker:
     def __init__(self):
-        self.resetContract()
-
-    def resetContract(self):
-        self.stateVariables = {}
-        self.resetPredicate()
-
-    def resetPredicate(self):
-        self.localVariables = {}
+        pass
 
     def check(self, tokens, code):
         self.tokens = tokens
@@ -21,7 +14,6 @@ class SyntaxChecker:
         return self.checkContract()
 
     def checkContract(self):
-        self.resetContract()
         contract_node = ContractNode("", ASTNodeTypes.ContractDefinition)
         token = self.predict_token()
         while token.type != TokenTypes.EOF:
@@ -41,9 +33,6 @@ class SyntaxChecker:
     def checkStateVar(self):
         identifier = self.next_token([TokenTypes.Identifier])
         state_var_node = StateVarDeclNode(identifier.value, ASTNodeTypes.StateVarDeclaration)
-        if identifier in self.stateVariables:
-            self.report_error("state variable " + identifier + " already declared.", identifier.position, identifier.length)
-        self.stateVariables[identifier.value] = state_var_node
         state_var_node.add_child(ASTNodeChildrenTypes.VisibilitySpecifier, self.checkVisibility())
         var_type = self.next_token([TokenTypes.Type])
         var_type_node = TypeNode(var_type.value, ASTNodeTypes.Type)
@@ -62,7 +51,6 @@ class SyntaxChecker:
         return pred_node
 
     def checkPredicateCase(self):
-        self.resetPredicate()
         pred_node = PredicateCaseNode("", ASTNodeTypes.PredicateCase)
         pred_node.add_child(ASTNodeChildrenTypes.ParameterList, self.checkPredicateParameters())
         pred_node.add_child(ASTNodeChildrenTypes.ReturnValue, self.checkReturnValue())
@@ -82,10 +70,12 @@ class SyntaxChecker:
         return predBody
 
     def checkReturnValue(self):
-        retValue = ReturnValueNode("", ASTNodeTypes.ReturnValue)
+        retName = ""
         token = self.predict_token()
         if token.type == TokenTypes.Identifier:
-            retValue.add_child(ASTNodeChildrenTypes.Name, self.checkIdentifier())
+            id_node = self.checkIdentifier()
+            retName = id_node.name
+        retValue = ReturnValueNode(retName, ASTNodeTypes.ReturnValue)
         return retValue
 
     def checkStatement(self):
@@ -94,14 +84,12 @@ class SyntaxChecker:
         statement_node = None
         token = self.predict_token()
         if token.type == TokenTypes.Identifier:
-            statement_node = UserPredicateCallNode("", ASTNodeTypes.UserPredicate)
             id_node = self.checkIdentifier()
-            id_node.setRef(statement_node)
-            statement_node.add_child(ASTNodeChildrenTypes.Name, id_node)
+            statement_node = UserPredicateCallNode(id_node.name, ASTNodeTypes.UserPredicate)
         else:
             token = self.next_token([TokenTypes.UpdateOperator, TokenTypes.UnaryOperator, TokenTypes.BinaryOperator, TokenTypes.TernaryOperator])
             if token.type == TokenTypes.UpdateOperator:
-                statement_node = UpdateOperatorNode("", ASTNodeTypes.UpdateOperator)
+                statement_node = UpdateOperatorNode(token.value, ASTNodeTypes.UpdateOperator)
             elif token.type == TokenTypes.UnaryOperator:
                 statement_node = UnaryOperatorNode(token.value, ASTNodeTypes.UnaryOperator)
             elif token.type == TokenTypes.BinaryOperator:
@@ -135,10 +123,10 @@ class SyntaxChecker:
     def checkIdentifier(self):
         token = self.next_token([TokenTypes.Identifier])
         id_node = IdentifierNode(token.value, ASTNodeTypes.Identifier)
-        if token.value in self.stateVariables:
-            id_node.setRef(self.stateVariables[token.value])
-        elif token.value in self.localVariables:
-            id_node.setRef(self.localVariables[token.value])
+        #if token.value in self.stateVariables:
+        #    id_node.setRef(self.stateVariables[token.value])
+        #elif token.value in self.localVariables:
+        #    id_node.setRef(self.localVariables[token.value])
         #else:
         #    self.report_error("variable " + token.value + " not declared.")
         return id_node
@@ -156,7 +144,7 @@ class SyntaxChecker:
         token = self.next_token([TokenTypes.LeftParent])
         token = self.predict_token()
         while token.type != TokenTypes.RightParent:
-            param_list.add_child(ASTNodeChildrenTypes.LocalVar, self.checkParamVar())
+            param_list.add_child(ASTNodeChildrenTypes.ParamVar, self.checkParamVar())
             token = self.predict_token()
         token = self.next_token([TokenTypes.RightParent])
         return param_list
@@ -187,15 +175,8 @@ class SyntaxChecker:
     def checkParamVarWithType(self, varNode, varType):
         type_node = TypeNode(varType, ASTNodeTypes.Type)
         id_node = self.checkIdentifier()
+        varNode.name = id_node.name
         varNode.add_child(ASTNodeChildrenTypes.Type, type_node)
-        varNode.add_child(ASTNodeChildrenTypes.Name, id_node)
-        self.checkLocalVar(id_node.name, varNode)
-
-
-    def checkLocalVar(self, name, node):
-        if name in self.localVariables:
-            self.report_error("local variable " + name + " already declared.", 0, 0)
-        self.localVariables[name] = node
 
     def checkType(self):
         token = self.next_token([TokenTypes.Type])

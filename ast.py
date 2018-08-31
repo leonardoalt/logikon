@@ -50,15 +50,26 @@ class ASTNode:
     def accept(self, _visitor):
         pass
 
+    def acceptChildrenKey(self, _key, _visitor):
+        for child in self.children[_key]:
+            child.accept(_visitor)
+
     def acceptChildren(self, _visitor):
         for key in self.children:
-            for child in self.children[key]:
-                child.accept(_visitor)
+            self.acceptChildrenKey(key, _visitor)
+
+    def acceptChildrenSequence(self, _seq, _visitor):
+        for key in _seq:
+            self.acceptChildrenKey(key, _visitor)
 
 class ContractNode(ASTNode):
     def accept(self, _visitor):
         _visitor.visitContract(self)
-        self.acceptChildren(_visitor)
+        childSeq = [
+            ASTNodeChildrenTypes.StateVarDeclaration,
+            ASTNodeChildrenTypes.PredicateDefinition
+        ]
+        self.acceptChildrenSequence(childSeq, _visitor)
         _visitor.endVisitContract(self)
 
 class VarDecl(ASTNode):
@@ -91,7 +102,12 @@ class PredicateNode(ASTNode):
 class PredicateCaseNode(ASTNode):
     def accept(self, _visitor):
         _visitor.visitPredicateCase(self)
-        self.acceptChildren(_visitor)
+        childSeq = [
+            ASTNodeChildrenTypes.ParameterList,
+            ASTNodeChildrenTypes.ReturnValue,
+            ASTNodeChildrenTypes.PredicateBody
+        ]
+        self.acceptChildrenSequence(childSeq, _visitor)
         _visitor.endVisitPredicateCase(self)
 
 class PredicateBodyNode(ASTNode):
@@ -142,9 +158,6 @@ class IdentifierNode(ASTNode):
         _visitor.visitIdentifier(self)
         self.acceptChildren(_visitor)
         _visitor.endVisitIdentifier(self)
-
-    def setRef(self, _ref):
-        self.refDecl = _ref
 
 class VisibilityNode(ASTNode):
     def accept(self, _visitor):

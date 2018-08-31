@@ -3,6 +3,7 @@
 from formal_checker import FormalChecker
 from parser import Parser
 from syntax_checker import SyntaxChecker
+from type_checker import TypeChecker
 
 import os
 import sys
@@ -21,6 +22,9 @@ if __name__ == '__main__':
     syntax_checker = SyntaxChecker()
     ast = syntax_checker.check(tokens, source)
     print(ast.toString())
+
+    type_checker = TypeChecker()
+    ast.accept(type_checker)
 
 #    formal_checker = FormalChecker()
 #    ast.accept(formal_checker)
