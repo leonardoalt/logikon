@@ -1,3 +1,30 @@
+class ASTNodeTypes:
+    ContractDefinition = "ContractDefinition"
+    StateVarDeclaration = "StateVarDeclaration"
+    PredicateDefinition = "PredicateDefinition"
+    PredicateCase = "PredicateCase"
+    PredicateBody = "PredicateBody"
+    VisibilitySpecifier = "VisibilitySpecifier"
+    Type = "Type"
+    ReturnValue = "ReturnValue"
+    UserPredicate = "UserPredicate"
+    UpdateOperator = "UpdateOperator"
+    UnaryOperator = "UnaryOperator"
+    BinaryOperator = "BinaryOperator"
+    TernaryOperator = "TernaryOperator"
+    Number = "Number"
+    Identifier = "Identifier"
+    ParameterList = "ParameterList"
+    ParamVar = "ParamVar"
+
+class ASTNodeChildrenTypes(ASTNodeTypes):
+    Name = "Name"
+    Statement = "Statement"
+    Argument = "Argument"
+    LocalVar = "LocalVar"
+    Head = "Head"
+    Tail = "Tail"
+
 class ASTNode:
     def __init__(self, _name, _type):
         self.children = {}

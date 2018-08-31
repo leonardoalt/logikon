@@ -1,4 +1,5 @@
 from ast import *
+from keywords import *
 
 import sys
 
@@ -21,119 +22,119 @@ class SyntaxChecker:
 
     def checkContract(self):
         self.resetContract()
-        contract_node = ContractNode("", "ContractDefinition")
+        contract_node = ContractNode("", ASTNodeTypes.ContractDefinition)
         token = self.predict_token()
-        while token.type != "EOF":
+        while token.type != TokenTypes.EOF:
             nodeType, node = self.checkStateVarOrPredicate()
             contract_node.add_child(nodeType, node)
             token = self.predict_token()
-        token = self.next_token(["EOF"])
+        token = self.next_token([TokenTypes.EOF])
         return contract_node
 
     def checkStateVarOrPredicate(self):
-        declaration = self.next_token(["state_var_declaration", "predicate_declaration"])
-        if declaration.type == "state_var_declaration":
-            return ("StateVarDeclaration", self.checkStateVar())
-        if declaration.type == "predicate_declaration":
-            return ("PredicateDefinition", self.checkPredicate())
+        declaration = self.next_token([TokenTypes.StateVarDeclaration, TokenTypes.PredicateDefinition])
+        if declaration.type == TokenTypes.StateVarDeclaration:
+            return (ASTNodeChildrenTypes.StateVarDeclaration, self.checkStateVar())
+        if declaration.type == TokenTypes.PredicateDefinition:
+            return (ASTNodeChildrenTypes.PredicateDefinition, self.checkPredicate())
 
     def checkStateVar(self):
-        identifier = self.next_token(["identifier"])
-        state_var_node = StateVarDeclNode(identifier.value, "StateVarDeclaration")
+        identifier = self.next_token([TokenTypes.Identifier])
+        state_var_node = StateVarDeclNode(identifier.value, ASTNodeTypes.StateVarDeclaration)
         if identifier in self.stateVariables:
             self.report_error("state variable " + identifier + " already declared.", identifier.position, identifier.length)
         self.stateVariables[identifier.value] = state_var_node
-        state_var_node.add_child("Visibility", self.checkVisibility())
-        var_type = self.next_token(["type"])
-        var_type_node = TypeNode(var_type.value, "Type")
-        state_var_node.add_child("Type", var_type_node)
-        period = self.next_token(["period"])
+        state_var_node.add_child(ASTNodeChildrenTypes.VisibilitySpecifier, self.checkVisibility())
+        var_type = self.next_token([TokenTypes.Type])
+        var_type_node = TypeNode(var_type.value, ASTNodeTypes.Type)
+        state_var_node.add_child(ASTNodeChildrenTypes.Type, var_type_node)
+        period = self.next_token([TokenTypes.Period])
         return state_var_node
 
     def checkPredicate(self):
-        identifier = self.next_token(["identifier"])
-        pred_node = PredicateNode(identifier.value, "PredicateDefinition")
-        pred_node.add_child("Visibility", self.checkVisibility())
+        identifier = self.next_token([TokenTypes.Identifier])
+        pred_node = PredicateNode(identifier.value, ASTNodeTypes.PredicateDefinition)
+        pred_node.add_child(ASTNodeChildrenTypes.VisibilitySpecifier, self.checkVisibility())
         left_parent = self.predict_token()
-        while left_parent.type == "left_parent":
-            pred_node.add_child("PredicateCase", self.checkPredicateCase())
+        while left_parent.type == TokenTypes.LeftParent:
+            pred_node.add_child(ASTNodeChildrenTypes.PredicateCase, self.checkPredicateCase())
             left_parent = self.predict_token()
         return pred_node
 
     def checkPredicateCase(self):
         self.resetPredicate()
-        pred_node = PredicateCaseNode("", "PredicateCase")
-        pred_node.add_child("PredicateParameters", self.checkPredicateParameters())
-        pred_node.add_child("ReturnValue", self.checkReturnValue())
-        pred_node.add_child("PredicateBody", self.checkPredicateBody())
+        pred_node = PredicateCaseNode("", ASTNodeTypes.PredicateCase)
+        pred_node.add_child(ASTNodeChildrenTypes.ParameterList, self.checkPredicateParameters())
+        pred_node.add_child(ASTNodeChildrenTypes.ReturnValue, self.checkReturnValue())
+        pred_node.add_child(ASTNodeChildrenTypes.PredicateBody, self.checkPredicateBody())
         return pred_node
 
     def checkPredicateBody(self):
-        predBody = PredicateBodyNode("", "PredicateBody")
+        predBody = PredicateBodyNode("", ASTNodeTypes.PredicateBody)
         token = self.predict_token()
-        if token.type == "entails":
-            entails = self.next_token(["entails"])
+        if token.type == TokenTypes.Entails:
+            entails = self.next_token([TokenTypes.Entails])
             token = self.predict_token()
-            while token.type == "left_parent":
-                predBody.add_child("Statement", self.checkStatement())
+            while token.type == TokenTypes.LeftParent:
+                predBody.add_child(ASTNodeChildrenTypes.Statement, self.checkStatement())
                 token = self.predict_token()
-        token = self.next_token(["period"])
+        token = self.next_token([TokenTypes.Period])
         return predBody
 
     def checkReturnValue(self):
-        retValue = ReturnValueNode("", "ReturnValue")
+        retValue = ReturnValueNode("", ASTNodeTypes.ReturnValue)
         token = self.predict_token()
-        if token.type == "identifier":
-            retValue.add_child("Name", self.checkIdentifier())
+        if token.type == TokenTypes.Identifier:
+            retValue.add_child(ASTNodeChildrenTypes.Name, self.checkIdentifier())
         return retValue
 
     def checkStatement(self):
-        token = self.next_token(["left_parent"])
+        token = self.next_token([TokenTypes.LeftParent])
         token = self.predict_token()
         statement_node = None
         token = self.predict_token()
-        if token.type == "identifier":
-            statement_node = UserPredicateCallNode("", "UserPredicate")
+        if token.type == TokenTypes.Identifier:
+            statement_node = UserPredicateCallNode("", ASTNodeTypes.UserPredicate)
             id_node = self.checkIdentifier()
             id_node.setRef(statement_node)
-            statement_node.add_child("Name", id_node)
+            statement_node.add_child(ASTNodeChildrenTypes.Name, id_node)
         else:
-            token = self.next_token(["update_operator", "unary_operator", "binary_operator", "ternary_operator"])
-            if token.type == "update_operator":
-                statement_node = UpdateOperatorNode("", "UpdateOperator")
-            elif token.type == "unary_operator":
-                statement_node = UnaryOperatorNode(token.value, "UnaryOperator")
-            elif token.type == "binary_operator":
-                statement_node = BinaryOperatorNode(token.value, "BinaryOperator")
-            elif token.type == "ternary_operator":
-                statement_node = TernaryOperatorNode(token.value, "TernaryOperator")
+            token = self.next_token([TokenTypes.UpdateOperator, TokenTypes.UnaryOperator, TokenTypes.BinaryOperator, TokenTypes.TernaryOperator])
+            if token.type == TokenTypes.UpdateOperator:
+                statement_node = UpdateOperatorNode("", ASTNodeTypes.UpdateOperator)
+            elif token.type == TokenTypes.UnaryOperator:
+                statement_node = UnaryOperatorNode(token.value, ASTNodeTypes.UnaryOperator)
+            elif token.type == TokenTypes.BinaryOperator:
+                statement_node = BinaryOperatorNode(token.value, ASTNodeTypes.BinaryOperator)
+            elif token.type == TokenTypes.TernaryOperator:
+                statement_node = TernaryOperatorNode(token.value, ASTNodeTypes.TernaryOperator)
 
         token = self.predict_token()
-        while token.type != "right_parent":
-            statement_node.add_child("Argument", self.checkAtom())
+        while token.type != TokenTypes.RightParent:
+            statement_node.add_child(ASTNodeChildrenTypes.Argument, self.checkAtom())
             token = self.predict_token()
 
-        token = self.next_token(["right_parent"])
+        token = self.next_token([TokenTypes.RightParent])
         token = self.predict_token()
-        if token.type == "comma":
-            token = self.next_token(["comma"])
+        if token.type == TokenTypes.Comma:
+            token = self.next_token([TokenTypes.Comma])
         return statement_node
 
     def checkAtom(self):
         token = self.predict_token()
-        if token.type == "number":
+        if token.type == TokenTypes.Number:
             return self.checkNumber()
-        if token.type == "identifier":
+        if token.type == TokenTypes.Identifier:
             return self.checkIdentifier()
         return self.checkStatement()
 
     def checkNumber(self):
-        token = self.next_token(["number"])
-        return NumberNode(token.value, "Number")
+        token = self.next_token([TokenTypes.Number])
+        return NumberNode(token.value, ASTNodeTypes.Number)
 
     def checkIdentifier(self):
-        token = self.next_token(["identifier"])
-        id_node = IdentifierNode(token.value, "Identifier")
+        token = self.next_token([TokenTypes.Identifier])
+        id_node = IdentifierNode(token.value, ASTNodeTypes.Identifier)
         if token.value in self.stateVariables:
             id_node.setRef(self.stateVariables[token.value])
         elif token.value in self.localVariables:
@@ -145,49 +146,49 @@ class SyntaxChecker:
     def checkVisibility(self):
         token = self.predict_token()
         visible = ""
-        if token.type == "visibility_specifier":
-            token = self.next_token(["visibility_specifier"])
+        if token.type == TokenTypes.VisibilitySpecifier:
+            token = self.next_token([TokenTypes.VisibilitySpecifier])
             visible = token.value
-        return VisibilityNode(visible, "Visibility")
+        return VisibilityNode(visible, ASTNodeTypes.VisibilitySpecifier)
 
     def checkPredicateParameters(self):
-        param_list = ParamListNode("", "ParameterList")
-        token = self.next_token(["left_parent"])
+        param_list = ParamListNode("", ASTNodeTypes.ParameterList)
+        token = self.next_token([TokenTypes.LeftParent])
         token = self.predict_token()
-        while token.type != "right_parent":
-            param_list.add_child("Variable", self.checkParamVar())
+        while token.type != TokenTypes.RightParent:
+            param_list.add_child(ASTNodeChildrenTypes.LocalVar, self.checkParamVar())
             token = self.predict_token()
-        token = self.next_token(["right_parent"])
+        token = self.next_token([TokenTypes.RightParent])
         return param_list
 
     def checkParamVar(self):
-        var = ParamVarNode("", "ParamVar")
+        var = ParamVarNode("", ASTNodeTypes.ParamVar)
         token = self.predict_token()
-        if token.type == "identifier":
+        if token.type == TokenTypes.Identifier:
             self.checkParamVarWithType(var, "UInt")
-        elif token.type == "left_brack":
-            token = self.next_token(["left_brack"])
-            type_node = TypeNode("List", "Type")
-            var.add_child("Type", type_node)
+        elif token.type == TokenTypes.LeftBrack:
+            token = self.next_token([TokenTypes.LeftBrack])
+            type_node = TypeNode("List", ASTNodeTypes.Type)
+            var.add_child(ASTNodeChildrenTypes.Type, type_node)
             token = self.predict_token()
-            if token.type != "right_brack":
-                head_node = ParamVarNode("", "ParamVar")
+            if token.type != TokenTypes.RightBrack:
+                head_node = ParamVarNode("", ASTNodeTypes.ParamVar)
                 self.checkParamVarWithType(head_node, "UInt")
-                var.add_child("Head", head_node)
+                var.add_child(ASTNodeChildrenTypes.Head, head_node)
                 token = self.predict_token()
-                if token.type == "pipe":
-                    token = self.next_token(["pipe"])
-                    tail_node = ParamVarNode("", "ParamVar")
+                if token.type == TokenTypes.Pipe:
+                    token = self.next_token([TokenTypes.Pipe])
+                    tail_node = ParamVarNode("", ASTNodeTypes.ParamVar)
                     self.checkParamVarWithType(tail_node, "List")
-                    var.add_child("Tail", tail_node)
-            token = self.next_token(["right_brack"])
+                    var.add_child(ASTNodeChildrenTypes.Tail, tail_node)
+            token = self.next_token([TokenTypes.RightBrack])
         return var
 
     def checkParamVarWithType(self, varNode, varType):
-        type_node = TypeNode(varType, "Type")
+        type_node = TypeNode(varType, ASTNodeTypes.Type)
         id_node = self.checkIdentifier()
-        varNode.add_child("Type", type_node)
-        varNode.add_child("Name", id_node)
+        varNode.add_child(ASTNodeChildrenTypes.Type, type_node)
+        varNode.add_child(ASTNodeChildrenTypes.Name, id_node)
         self.checkLocalVar(id_node.name, varNode)
 
 
@@ -197,8 +198,8 @@ class SyntaxChecker:
         self.localVariables[name] = node
 
     def checkType(self):
-        token = self.next_token(["type"])
-        return TypeNode(token.value, "Type")
+        token = self.next_token([TokenTypes.Type])
+        return TypeNode(token.value, ASTNodeTypes.Type)
 
     def report_error(self, message, position, length):
         msg = "SyntaxError: " + message

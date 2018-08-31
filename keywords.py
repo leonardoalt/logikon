@@ -35,6 +35,7 @@ class Keywords:
     Space = " "
     Tab = "\t"
     LineBreak = "\n"
+    EOF = 0
 
     _blanks = [
         Space,
@@ -76,38 +77,60 @@ class Keywords:
         Select
     ]
 
-    _types = {
-        Declare : "state_var_declaration",
-        Define: "predicate_declaration",
-        Public : "visibility_specifier",
-        UInt : "type",
-        Array : "type",
-        List : "type",
-        Sum : "unary_operator",
-        Prove : "unary_operator",
-        Not : "unary_operator",
-        Update : "update_operator",
-        Select : "binary_operator",
-        Store : "ternary_operator",
-        Ite : "ternary_operator",
-        Equals : "binary_operator",
-        NotEquals : "binary_operator",
-        LessThan : "binary_operator",
-        LessOrEqual : "binary_operator",
-        GreaterThan : "binary_operator",
-        GreaterOrEqual : "binary_operator",
-        And : "binary_operator",
-        Or : "binary_operator",
-        Plus : "binary_operator",
-        Minus : "binary_operator",
-        Multiplication : "binary_operator",
-        Division : "binary_operator",
-        LeftParent : "left_parent",
-        RightParent : "right_parent",
-        LeftBrack : "left_brack",
-        RightBrack : "right_brack",
-        Entails : "entails",
-        Period : "period",
-        Comma : "comma",
-        Pipe : "pipe"
+class TokenTypes:
+    StateVarDeclaration = "state_var_declaration"
+    PredicateDefinition = "predicate_definition"
+    VisibilitySpecifier = "visibility_specifier"
+    Type = "type"
+    Identifier = "identifier"
+    Number = "number"
+    Period = "period"
+    Comma = "comma"
+    Pipe = "pipe"
+    LeftParent = "left_parent"
+    RightParent = "right_parent"
+    LeftBrack = "left_brack"
+    RightBrack = "right_brack"
+    Entails = "entails"
+    UpdateOperator = "update_operator"
+    UnaryOperator = "unary_operator"
+    BinaryOperator = "binary_operator"
+    TernaryOperator = "ternary_operator"
+    EOF = "EOF"
+
+    types = {
+        Keywords.Declare : StateVarDeclaration,
+        Keywords.Define : PredicateDefinition,
+        Keywords.Public : VisibilitySpecifier,
+        Keywords.UInt : Type,
+        Keywords.Array : Type,
+        Keywords.List : Type,
+        Keywords.Sum : UnaryOperator,
+        Keywords.Prove : UnaryOperator,
+        Keywords.Not : UnaryOperator,
+        Keywords.Update : UnaryOperator,
+        Keywords.Select : BinaryOperator,
+        Keywords.Store : TernaryOperator,
+        Keywords.Ite : TernaryOperator,
+        Keywords.Equals : BinaryOperator,
+        Keywords.NotEquals : BinaryOperator,
+        Keywords.LessThan : BinaryOperator,
+        Keywords.LessOrEqual : BinaryOperator,
+        Keywords.GreaterThan : BinaryOperator,
+        Keywords.GreaterOrEqual : BinaryOperator,
+        Keywords.And : BinaryOperator,
+        Keywords.Or : BinaryOperator,
+        Keywords.Plus : BinaryOperator,
+        Keywords.Minus : BinaryOperator,
+        Keywords.Multiplication : BinaryOperator,
+        Keywords.Division : BinaryOperator,
+        Keywords.LeftParent : LeftParent,
+        Keywords.RightParent : RightParent,
+        Keywords.LeftBrack : LeftBrack,
+        Keywords.RightBrack : RightBrack,
+        Keywords.Entails : Entails,
+        Keywords.Period : Period,
+        Keywords.Comma : Comma,
+        Keywords.Pipe : Pipe,
+        Keywords.EOF : EOF
     }

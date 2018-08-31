@@ -1,5 +1,6 @@
 from logikon_token import LogikonToken
 from keywords import Keywords
+from keywords import TokenTypes
 
 class Parser:
     def parse(self, code):
@@ -14,7 +15,7 @@ class Parser:
     def parse_token(self):
         self.consume_blanks()
         if self.needle >= len(self.code):
-            return LogikonToken("", "EOF", self.needle, 0)
+            return LogikonToken("", TokenTypes.EOF, self.needle, 0)
 
         c = self.current_char()
         if c in Keywords._separators:
@@ -23,12 +24,12 @@ class Parser:
             token = self.next_token()
 
         t_type = ""
-        if token in Keywords._types:
-            t_type = Keywords._types[token]
+        if token in TokenTypes.types:
+            t_type = TokenTypes.types[token]
         elif token.isnumeric():
-            t_type = "number"
+            t_type = TokenTypes.Number
         elif token.isidentifier():
-            t_type = "identifier"
+            t_type = TokenTypes.Identifier
         else:
             print("ParserError: Invalid token \"" + token + "\".")
 
