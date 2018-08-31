@@ -153,30 +153,26 @@ class SyntaxChecker:
         var = ParamVarNode("", ASTNodeTypes.ParamVar)
         token = self.predict_token()
         if token.type == TokenTypes.Identifier:
-            self.checkParamVarWithType(var, "UInt")
+            self.checkParamVarId(var)
         elif token.type == TokenTypes.LeftBrack:
             token = self.next_token([TokenTypes.LeftBrack])
-            type_node = TypeNode("List", ASTNodeTypes.Type)
-            var.add_child(ASTNodeChildrenTypes.Type, type_node)
             token = self.predict_token()
             if token.type != TokenTypes.RightBrack:
                 head_node = ParamVarNode("", ASTNodeTypes.ParamVar)
-                self.checkParamVarWithType(head_node, "UInt")
+                self.checkParamVarId(head_node)
                 var.add_child(ASTNodeChildrenTypes.Head, head_node)
                 token = self.predict_token()
                 if token.type == TokenTypes.Pipe:
                     token = self.next_token([TokenTypes.Pipe])
                     tail_node = ParamVarNode("", ASTNodeTypes.ParamVar)
-                    self.checkParamVarWithType(tail_node, "List")
+                    self.checkParamVarId(tail_node)
                     var.add_child(ASTNodeChildrenTypes.Tail, tail_node)
             token = self.next_token([TokenTypes.RightBrack])
         return var
 
-    def checkParamVarWithType(self, varNode, varType):
-        type_node = TypeNode(varType, ASTNodeTypes.Type)
+    def checkParamVarId(self, varNode):
         id_node = self.checkIdentifier()
         varNode.name = id_node.name
-        varNode.add_child(ASTNodeChildrenTypes.Type, type_node)
 
     def checkType(self):
         token = self.next_token([TokenTypes.Type])

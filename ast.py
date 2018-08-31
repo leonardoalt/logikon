@@ -60,7 +60,11 @@ class ASTNode:
 
     def acceptChildrenSequence(self, _seq, _visitor):
         for key in _seq:
-            self.acceptChildrenKey(key, _visitor)
+            if key in self.children:
+                self.acceptChildrenKey(key, _visitor)
+        for key in self.children:
+            if key not in _seq:
+                self.acceptChildrenKey(key, _visitor)
 
 class ContractNode(ASTNode):
     def accept(self, _visitor):
@@ -84,7 +88,11 @@ class StateVarDeclNode(VarDecl):
 class ParamVarNode(VarDecl):
     def accept(self, _visitor):
         _visitor.visitParamVar(self)
-        self.acceptChildren(_visitor)
+        childSeq = [
+            ASTNodeChildrenTypes.Head,
+            ASTNodeChildrenTypes.Tail
+        ]
+        self.acceptChildrenSequence(childSeq, _visitor)
         _visitor.endVisitParamVar(self)
 
 class TypeNode(ASTNode):

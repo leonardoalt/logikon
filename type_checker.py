@@ -2,6 +2,12 @@ from visitor import Visitor
 from ast import *
 from ast import ASTNodeChildrenTypes as ASTChildren
 
+class Types:
+    UInt = "UInt"
+    Array = "Array"
+    List = "List"
+    Default = UInt
+
 class TypeChecker(Visitor, ASTNodeChildrenTypes):
     def __init__(self):
         self.error = False
@@ -12,6 +18,16 @@ class TypeChecker(Visitor, ASTNodeChildrenTypes):
 
     def resetPredicate(self):
         self.localVariables = {}
+
+    def visitContract(self, node):
+        self.resetContract()
+
+    def visitPredicateCase(self, node):
+        self.resetPredicate()
+
+    def reportError(self, msg):
+        print("TypeError: " + msg)
+        self.error = True
 
     def endVisitStateVarDecl(self, node):
         if node.name == None or node.name == "":
@@ -24,13 +40,17 @@ class TypeChecker(Visitor, ASTNodeChildrenTypes):
         if ASTChildren.Type not in node.children:
             self.reportError("Typeless state variable.")
 
-    def visitContract(self, node):
-        self.resetContract()
+    def endVisitParamVar(self, node):
+        if node.name in self.localVariables:
+            self.reportError("Parameter " + node.name + " declared twice.")
+        else:
+            self.localVariables[node.name] = node
+            self.inferParamType(node)
 
-    def visitPredicateCase(self, node):
-        self.resetPredicate()
-
-
-    def reportError(self, msg):
-        print("TypeError: " + msg)
-        self.error = True
+    def inferParamType(self, node):
+        if node.name.startswith('['):
+            typeName = Types.List
+        else:
+            typeName = Types.Default
+        typeNode = TypeNode(typeName, ASTNodeTypes.Type)
+        node.add_child(ASTNodeChildrenTypes.Type, typeNode)
